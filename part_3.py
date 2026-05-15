@@ -4,15 +4,19 @@ Part 3 — South Africa: exchange rates, equity index, and trade balance.
 Country: South Africa (ZAR). Major trading partner used for the trade balance: USA.
 Stock index: JSE Top 40. Exchange rates: ZAR/USD (EXSFUS) and USD/EUR (EXUSEU).
 
-Data files (monthly, FRED / market sources):
-    EXSFUS.csv           ZAR per 1 USD
-    EXUSEU.csv           USD per 1 EUR
-    SAR_TOP40_INDEX.csv  JSE Top 40 close
-    SAR_USD_balance.csv  ZA trade balance vs. USA (USD millions, signed)
+Data files (monthly):
+    ZAR_USD.csv               ZAR per 1 USD              [South African Reserve Bank]
+    USD_EUR.csv               USD per 1 EUR              [South African Reserve Bank]
+    ZA_TOP40_index.csv        JSE Top 40 close           [Investing.com,
+                                                          investing.com/indices/ftse-jse-top-40-historical-data]
+    ZA_US_trade_balance.csv   ZA trade balance vs. USA   [US Census Bureau,
+                              (USD millions, signed)      census.gov/foreign-trade/balance/c7910.html]
 """
 
 import polars as pl
 import statsmodels.api as sm
+from great_tables import GT, md
+from stargazer.stargazer import Stargazer
 from statsmodels.stats.diagnostic import het_breuschpagan, acorr_breusch_godfrey
 from statsmodels.stats.stattools import durbin_watson, jarque_bera
 from statsmodels.tsa.stattools import adfuller
@@ -29,10 +33,10 @@ def load_series(path: str, date_col: str, value_col: str, name: str) -> pl.DataF
     )
 
 
-zar_usd = load_series("EXSFUS.csv", "observation_date", "EXSFUS", "ZAR_USD")
-usd_eur = load_series("EXUSEU.csv", "observation_date", "EXUSEU", "USD_EUR")
-top40 = load_series("SAR_TOP40_INDEX.csv", "Date", "Close", "TOP40")
-trade_bal = load_series("SAR_USD_balance.csv", "date", "balance", "TRADE_BAL_USD")
+zar_usd = load_series("ZAR_USD.csv", "observation_date", "EXSFUS", "ZAR_USD")
+usd_eur = load_series("USD_EUR.csv", "observation_date", "EXUSEU", "USD_EUR")
+top40 = load_series("ZA_TOP40_index.csv", "Date", "Close", "TOP40")
+trade_bal = load_series("ZA_US_trade_balance.csv", "date", "balance", "TRADE_BAL_USD")
 
 # ZAR/EUR cross-rate from ZAR/USD * USD/EUR. Inner-join keeps the common window.
 levels = (
@@ -156,19 +160,20 @@ def run_ols(df: pl.DataFrame, y_col: str, x_col: str, lag: int, label: str):
     sub = (
         df.select(
             pl.col(y_col),
-            pl.col(x_col).shift(lag).alias("x_lag"),
+            pl.col(x_col).shift(lag).alias("zar_usd_lag"),
         )
         .drop_nulls()
+        .to_pandas()
     )
-    y = sub[y_col].to_numpy()
-    X = sm.add_constant(sub["x_lag"].to_numpy())
+    y = sub[y_col]
+    X = sm.add_constant(sub[["zar_usd_lag"]])
     model = sm.OLS(y, X).fit()
     hac = model.get_robustcov_results(cov_type="HAC", maxlags=HAC_LAGS)
     print("\n" + "-" * 70)
     print(f"Regression: {label}   (n = {int(model.nobs)})")
     print("-" * 70)
-    print(f"  intercept : {model.params[0]:+.4f}  (p = {model.pvalues[0]:.3f})")
-    print(f"  slope     : {model.params[1]:+.4f}  (p = {model.pvalues[1]:.3f})"
+    print(f"  intercept : {model.params.iloc[0]:+.4f}  (p = {model.pvalues.iloc[0]:.3f})")
+    print(f"  slope     : {model.params.iloc[1]:+.4f}  (p = {model.pvalues.iloc[1]:.3f})"
           f"   |  HAC p = {hac.pvalues[1]:.3f}")
     print(f"  R²        : {model.rsquared:.4f}")
     print(f"  Adj. R²   : {model.rsquared_adj:.4f}")
@@ -189,9 +194,9 @@ print("Coefficient comparison across specifications")
 print("=" * 70)
 summary_df = pl.DataFrame({
     "metric":  ["beta", "p-value (OLS)", "p-value (HAC)", "R²", "n"],
-    "lag_0":   [m0.params[1], m0.pvalues[1], m0_hac.pvalues[1], m0.rsquared, float(m0.nobs)],
-    "lag_1":   [m1.params[1], m1.pvalues[1], m1_hac.pvalues[1], m1.rsquared, float(m1.nobs)],
-    "lag_2":   [m2.params[1], m2.pvalues[1], m2_hac.pvalues[1], m2.rsquared, float(m2.nobs)],
+    "lag_0":   [m0.params.iloc[1], m0.pvalues.iloc[1], m0_hac.pvalues[1], m0.rsquared, float(m0.nobs)],
+    "lag_1":   [m1.params.iloc[1], m1.pvalues.iloc[1], m1_hac.pvalues[1], m1.rsquared, float(m1.nobs)],
+    "lag_2":   [m2.params.iloc[1], m2.pvalues.iloc[1], m2_hac.pvalues[1], m2.rsquared, float(m2.nobs)],
 }).with_columns([pl.col(c).round(4) for c in ["lag_0", "lag_1", "lag_2"]])
 print(summary_df)
 
@@ -208,10 +213,7 @@ diag_df = pl.DataFrame({
 })
 print(diag_df)
 
-print("""
-======================================================================
-Interpretation
-======================================================================
+interpretation = """\
 Summary statistics & correlations:
 TOP40 has the highest monthly volatility of the three return series
 (σ ≈ 4.2%) — a single-country emerging-market index naturally swings
@@ -272,4 +274,162 @@ shifts a single linear specification cannot absorb. Given the
 Breusch-Godfrey rejection, an ARDL or error-correction model that
 explicitly models the residual dynamics would be the natural next
 step for inference.
-""")
+"""
+
+print("\n" + "=" * 70)
+print("Interpretation")
+print("=" * 70)
+print(interpretation)
+
+
+# HTML export. Polars frames expose _repr_html_(); regressions are rendered
+# side-by-side via stargazer so coefficients across lag specs share rows.
+def section(title: str, body: str) -> str:
+    return f"<section><h2>{title}</h2>{body}</section>"
+
+
+star = Stargazer([m0, m1, m2])
+star.title("%ΔTrade balance (USA) on lagged %ΔZAR/USD")
+star.custom_columns(["Lag 0", "Lag 1", "Lag 2"], [1, 1, 1])
+star.show_model_numbers(False)
+star.rename_covariates({"zar_usd_lag": "%ΔZAR/USD (lagged)"})
+star.dependent_variable_name("%ΔTrade balance ")
+star.significant_digits(3)
+star.add_line("HAC p-value (slope)",
+              [f"{m0_hac.pvalues[1]:.3f}",
+               f"{m1_hac.pvalues[1]:.3f}",
+               f"{m2_hac.pvalues[1]:.3f}"])
+star.add_line("Breusch-Pagan p",
+              [f"{d0['bp_p']:.3f}", f"{d1['bp_p']:.3f}", f"{d2['bp_p']:.3f}"])
+star.add_line("Breusch-Godfrey p",
+              [f"{d0['bg_p']:.3f}", f"{d1['bg_p']:.3f}", f"{d2['bg_p']:.3f}"])
+star.add_line("Durbin-Watson",
+              [f"{d0['dw']:.3f}", f"{d1['dw']:.3f}", f"{d2['dw']:.3f}"])
+star.add_line("Jarque-Bera p",
+              [f"{d0['jb_p']:.3f}", f"{d1['jb_p']:.3f}", f"{d2['jb_p']:.3f}"])
+star.add_custom_notes([
+    f"HAC standard errors use Newey-West with {HAC_LAGS} lags.",
+    "Stars under default OLS standard errors; *p<0.1, **p<0.05, ***p<0.01.",
+])
+
+
+desc_html = (
+    GT(desc, rowname_col="series")
+    .tab_header(title="Summary statistics", subtitle="Monthly % changes")
+    .fmt_number(columns=["mean", "std", "min", "max", "skew", "kurt"], decimals=3)
+    .cols_label(mean="Mean", std="Std", min="Min", max="Max",
+                skew="Skew", kurt="Kurt")
+    .as_raw_html()
+)
+
+corr_html = (
+    GT(corr_labeled, rowname_col="series")
+    .tab_header(title="Correlation matrix", subtitle="Monthly % changes")
+    .fmt_number(columns=ret_cols, decimals=3)
+    .data_color(columns=ret_cols, domain=[-1, 1],
+                palette=["#b2182b", "#f7f7f7", "#2166ac"])
+    .as_raw_html()
+)
+
+summary_html = (
+    GT(summary_df, rowname_col="metric")
+    .tab_header(title="Coefficient comparison",
+                subtitle="J-curve specs at lags 0, 1, 2")
+    .fmt_number(columns=["lag_0", "lag_1", "lag_2"], decimals=4)
+    .cols_label(lag_0="Lag 0", lag_1="Lag 1", lag_2="Lag 2")
+    .as_raw_html()
+)
+
+diag_html = (
+    GT(diag_df, rowname_col="test")
+    .tab_header(title="BLUE-assumption diagnostics",
+                subtitle=md("p-values; **\\*** = reject at 5%"))
+    .cols_label(lag_0="Lag 0", lag_1="Lag 1", lag_2="Lag 2")
+    .as_raw_html()
+)
+
+
+html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Part 3 — South Africa: FX, equities, trade balance</title>
+<style>
+  body {{ font-family: -apple-system, system-ui, sans-serif; max-width: 1000px;
+          margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; line-height: 1.5; }}
+  h1 {{ border-bottom: 2px solid #333; padding-bottom: .3rem; }}
+  h2 {{ margin-top: 2rem; border-bottom: 1px solid #ccc; padding-bottom: .2rem; }}
+  table {{ border-collapse: collapse; margin: .5rem 0; }}
+  th, td {{ border: 1px solid #ddd; padding: 4px 8px; text-align: right; }}
+  th {{ background: #f4f4f4; }}
+  pre {{ background: #f7f7f7; padding: 1rem; border-radius: 4px;
+         white-space: pre-wrap; font-size: 0.9rem; }}
+  section {{ margin-bottom: 1.5rem; }}
+</style>
+</head>
+<body>
+<h1>Part 3 — South Africa: exchange rates, equity index, and trade balance</h1>
+<p>Aligned monthly sample: <strong>{date_min:%Y-%m} → {date_max:%Y-%m}</strong>
+   ({levels.height} observations). Country: South Africa (ZAR); major trading
+   partner: USA; stock index: JSE Top&nbsp;40.</p>
+<h2>Data sources</h2>
+<table>
+  <thead>
+    <tr><th style="text-align:left">Series</th>
+        <th style="text-align:left">File</th>
+        <th style="text-align:left">Source</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="text-align:left">ZAR per 1 USD</td>
+        <td style="text-align:left"><code>ZAR_USD.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank
+            (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
+    <tr><td style="text-align:left">USD per 1 EUR</td>
+        <td style="text-align:left"><code>USD_EUR.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank
+            (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
+    <tr><td style="text-align:left">JSE Top 40 close</td>
+        <td style="text-align:left"><code>ZA_TOP40_index.csv</code></td>
+        <td style="text-align:left">Investing.com,
+            <a href="https://www.investing.com/indices/ftse-jse-top-40-historical-data">FTSE/JSE Top 40 historical data</a></td></tr>
+    <tr><td style="text-align:left">ZA–US trade balance (USD mn)</td>
+        <td style="text-align:left"><code>ZA_US_trade_balance.csv</code></td>
+        <td style="text-align:left">US Census Bureau,
+            <a href="https://www.census.gov/foreign-trade/balance/c7910.html">Trade in Goods with South Africa</a></td></tr>
+    <tr><td style="text-align:left">SARB policy rate</td>
+        <td style="text-align:left"><code>SARB_policy_rate.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank,
+            <a href="https://www.resbank.co.za/en/home/what-we-do/statistics/key-statistics/selected-historical-rates">Selected historical rates</a></td></tr>
+    <tr><td style="text-align:left">ECB Main Refinancing Rate</td>
+        <td style="text-align:left"><code>ECB_policy_rate.csv</code></td>
+        <td style="text-align:left">FRED <code>ECBMRRFR</code>,
+            <a href="https://fred.stlouisfed.org/series/ECBMRRFR">fred.stlouisfed.org/series/ECBMRRFR</a></td></tr>
+    <tr><td style="text-align:left">US Federal Funds Rate</td>
+        <td style="text-align:left"><code>US_policy_rate.csv</code></td>
+        <td style="text-align:left">FRED <code>FEDFUNDS</code>,
+            <a href="https://fred.stlouisfed.org/series/FEDFUNDS">fred.stlouisfed.org/series/FEDFUNDS</a></td></tr>
+  </tbody>
+</table>
+
+{section("Summary statistics of monthly % changes", desc_html)}
+{section("Correlation matrix of monthly % changes", corr_html)}
+{section("Key pairwise correlations",
+    "<ul>"
+    f"<li>ZAR/USD vs TOP40: <strong>{fx_idx:+.3f}</strong></li>"
+    f"<li>ZAR/EUR vs TOP40: <strong>{fx_eur_idx:+.3f}</strong></li>"
+    f"<li>ZAR/USD vs ZAR/EUR: <strong>{fx_fx:+.3f}</strong></li>"
+    "</ul>")}
+
+{section("Regression results — J-curve specs side-by-side", star.render_html())}
+
+{section("Coefficient comparison across specifications", summary_html)}
+{section("BLUE-assumption diagnostics summary", diag_html)}
+{section("Interpretation", f"<pre>{interpretation}</pre>")}
+</body>
+</html>
+"""
+
+out_path = "results.html"
+with open(out_path, "w", encoding="utf-8") as f:
+    f.write(html)
+print(f"\nHTML report written to {out_path}")

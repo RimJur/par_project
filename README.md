@@ -70,6 +70,20 @@ uv run python part_3.py
 uv run python part_4.py
 ```
 
+## Data files
+
+Monthly CSVs.
+
+| File | Contents | Source |
+|---|---|---|
+| `ZAR_USD.csv` | South African Rand per 1 US Dollar | South African Reserve Bank ([resbank.co.za](https://www.resbank.co.za/)) |
+| `USD_EUR.csv` | US Dollar per 1 Euro | South African Reserve Bank ([resbank.co.za](https://www.resbank.co.za/)) |
+| `ZA_TOP40_index.csv` | JSE Top 40 index, monthly close | Investing.com, [FTSE/JSE Top 40 historical data](https://www.investing.com/indices/ftse-jse-top-40-historical-data) |
+| `ZA_US_trade_balance.csv` | South Africa–USA bilateral trade balance, USD millions (signed) | US Census Bureau, [Trade in Goods with South Africa](https://www.census.gov/foreign-trade/balance/c7910.html) |
+| `SARB_policy_rate.csv` | South African Reserve Bank policy rate | South African Reserve Bank, [Selected historical rates](https://www.resbank.co.za/en/home/what-we-do/statistics/key-statistics/selected-historical-rates) |
+| `ECB_policy_rate.csv` | ECB Main Refinancing Rate | FRED [`ECBMRRFR`](https://fred.stlouisfed.org/series/ECBMRRFR) |
+| `US_policy_rate.csv` | US Federal Funds Rate | FRED [`FEDFUNDS`](https://fred.stlouisfed.org/series/FEDFUNDS) |
+
 ## Managing dependencies
 
 ```bash

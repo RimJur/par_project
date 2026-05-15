@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Part 3 — South Africa: FX, equities, trade balance</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 1000px;
+          margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; line-height: 1.5; }
+  h1 { border-bottom: 2px solid #333; padding-bottom: .3rem; }
+  h2 { margin-top: 2rem; border-bottom: 1px solid #ccc; padding-bottom: .2rem; }
+  table { border-collapse: collapse; margin: .5rem 0; }
+  th, td { border: 1px solid #ddd; padding: 4px 8px; text-align: right; }
+  th { background: #f4f4f4; }
+  pre { background: #f7f7f7; padding: 1rem; border-radius: 4px;
+         white-space: pre-wrap; font-size: 0.9rem; }
+  section { margin-bottom: 1.5rem; }
+</style>
+</head>
+<body>
+<h1>Part 3 — South Africa: exchange rates, equity index, and trade balance</h1>
+<p>Aligned monthly sample: <strong>2021-04 → 2026-02</strong>
+   (59 observations). Country: South Africa (ZAR); major trading
+   partner: USA; stock index: JSE Top&nbsp;40.</p>
+<h2>Data sources</h2>
+<table>
+  <thead>
+    <tr><th style="text-align:left">Series</th>
+        <th style="text-align:left">File</th>
+        <th style="text-align:left">Source</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="text-align:left">ZAR per 1 USD</td>
+        <td style="text-align:left"><code>ZAR_USD.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank
+            (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
+    <tr><td style="text-align:left">USD per 1 EUR</td>
+        <td style="text-align:left"><code>USD_EUR.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank
+            (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
+    <tr><td style="text-align:left">JSE Top 40 close</td>
+        <td style="text-align:left"><code>ZA_TOP40_index.csv</code></td>
+        <td style="text-align:left">Investing.com,
+            <a href="https://www.investing.com/indices/ftse-jse-top-40-historical-data">FTSE/JSE Top 40 historical data</a></td></tr>
+    <tr><td style="text-align:left">ZA–US trade balance (USD mn)</td>
+        <td style="text-align:left"><code>ZA_US_trade_balance.csv</code></td>
+        <td style="text-align:left">US Census Bureau,
+            <a href="https://www.census.gov/foreign-trade/balance/c7910.html">Trade in Goods with South Africa</a></td></tr>
+    <tr><td style="text-align:left">SARB policy rate</td>
+        <td style="text-align:left"><code>SARB_policy_rate.csv</code></td>
+        <td style="text-align:left">South African Reserve Bank,
+            <a href="https://www.resbank.co.za/en/home/what-we-do/statistics/key-statistics/selected-historical-rates">Selected historical rates</a></td></tr>
+    <tr><td style="text-align:left">ECB Main Refinancing Rate</td>
+        <td style="text-align:left"><code>ECB_policy_rate.csv</code></td>
+        <td style="text-align:left">FRED <code>ECBMRRFR</code>,
+            <a href="https://fred.stlouisfed.org/series/ECBMRRFR">fred.stlouisfed.org/series/ECBMRRFR</a></td></tr>
+    <tr><td style="text-align:left">US Federal Funds Rate</td>
+        <td style="text-align:left"><code>US_policy_rate.csv</code></td>
+        <td style="text-align:left">FRED <code>FEDFUNDS</code>,
+            <a href="https://fred.stlouisfed.org/series/FEDFUNDS">fred.stlouisfed.org/series/FEDFUNDS</a></td></tr>
+  </tbody>
+</table>
+
+<section><h2>Summary statistics of monthly % changes</h2><div id="mphipfpbpr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#mphipfpbpr table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#mphipfpbpr thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#mphipfpbpr p { margin: 0; padding: 0; }
+ #mphipfpbpr .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #mphipfpbpr .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #mphipfpbpr .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #mphipfpbpr .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #mphipfpbpr .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #mphipfpbpr .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #mphipfpbpr .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #mphipfpbpr .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #mphipfpbpr .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #mphipfpbpr .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #mphipfpbpr .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #mphipfpbpr .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #mphipfpbpr .gt_spanner_row { border-bottom-style: hidden; }
+ #mphipfpbpr .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #mphipfpbpr .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #mphipfpbpr .gt_from_md> :first-child { margin-top: 0; }
+ #mphipfpbpr .gt_from_md> :last-child { margin-bottom: 0; }
+ #mphipfpbpr .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #mphipfpbpr .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #mphipfpbpr .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #mphipfpbpr .gt_row_group_first td { border-top-width: 2px; }
+ #mphipfpbpr .gt_row_group_first th { border-top-width: 2px; }
+ #mphipfpbpr .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #mphipfpbpr .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #mphipfpbpr .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #mphipfpbpr .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #mphipfpbpr .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #mphipfpbpr .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #mphipfpbpr .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #mphipfpbpr .gt_left { text-align: left; }
+ #mphipfpbpr .gt_center { text-align: center; }
+ #mphipfpbpr .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #mphipfpbpr .gt_font_normal { font-weight: normal; }
+ #mphipfpbpr .gt_font_bold { font-weight: bold; }
+ #mphipfpbpr .gt_font_italic { font-style: italic; }
+ #mphipfpbpr .gt_super { font-size: 65%; }
+ #mphipfpbpr .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #mphipfpbpr .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+  <tr class="gt_heading">
+    <td colspan="7" class="gt_heading gt_title gt_font_normal">Summary statistics</td>
+  </tr>
+  <tr class="gt_heading">
+    <td colspan="7" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">Monthly % changes</td>
+  </tr>
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id=""></th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="mean">Mean</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="std">Std</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="min">Min</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="max">Max</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="skew">Skew</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="kurt">Kurt</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_ZAR_USD</th>
+    <td class="gt_row gt_right">0.212</td>
+    <td class="gt_row gt_right">2.557</td>
+    <td class="gt_row gt_right">−4.178</td>
+    <td class="gt_row gt_right">6.665</td>
+    <td class="gt_row gt_right">0.702</td>
+    <td class="gt_row gt_right">−0.241</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_ZAR_EUR</th>
+    <td class="gt_row gt_right">0.182</td>
+    <td class="gt_row gt_right">2.131</td>
+    <td class="gt_row gt_right">−4.549</td>
+    <td class="gt_row gt_right">7.565</td>
+    <td class="gt_row gt_right">0.686</td>
+    <td class="gt_row gt_right">1.193</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_TOP40</th>
+    <td class="gt_row gt_right">1.260</td>
+    <td class="gt_row gt_right">4.199</td>
+    <td class="gt_row gt_right">−8.134</td>
+    <td class="gt_row gt_right">14.216</td>
+    <td class="gt_row gt_right">0.280</td>
+    <td class="gt_row gt_right">0.457</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_TBAL</th>
+    <td class="gt_row gt_right">13.361</td>
+    <td class="gt_row gt_right">69.611</td>
+    <td class="gt_row gt_right">−72.282</td>
+    <td class="gt_row gt_right">295.471</td>
+    <td class="gt_row gt_right">2.155</td>
+    <td class="gt_row gt_right">5.178</td>
+  </tr>
+</tbody>
+
+
+</table>
+
+</div>
+        </section>
+<section><h2>Correlation matrix of monthly % changes</h2><div id="fadhdcshyq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#fadhdcshyq table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#fadhdcshyq thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#fadhdcshyq p { margin: 0; padding: 0; }
+ #fadhdcshyq .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #fadhdcshyq .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #fadhdcshyq .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #fadhdcshyq .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #fadhdcshyq .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #fadhdcshyq .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #fadhdcshyq .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #fadhdcshyq .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #fadhdcshyq .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #fadhdcshyq .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #fadhdcshyq .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #fadhdcshyq .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #fadhdcshyq .gt_spanner_row { border-bottom-style: hidden; }
+ #fadhdcshyq .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #fadhdcshyq .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #fadhdcshyq .gt_from_md> :first-child { margin-top: 0; }
+ #fadhdcshyq .gt_from_md> :last-child { margin-bottom: 0; }
+ #fadhdcshyq .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #fadhdcshyq .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #fadhdcshyq .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #fadhdcshyq .gt_row_group_first td { border-top-width: 2px; }
+ #fadhdcshyq .gt_row_group_first th { border-top-width: 2px; }
+ #fadhdcshyq .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #fadhdcshyq .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #fadhdcshyq .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #fadhdcshyq .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #fadhdcshyq .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #fadhdcshyq .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #fadhdcshyq .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #fadhdcshyq .gt_left { text-align: left; }
+ #fadhdcshyq .gt_center { text-align: center; }
+ #fadhdcshyq .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #fadhdcshyq .gt_font_normal { font-weight: normal; }
+ #fadhdcshyq .gt_font_bold { font-weight: bold; }
+ #fadhdcshyq .gt_font_italic { font-style: italic; }
+ #fadhdcshyq .gt_super { font-size: 65%; }
+ #fadhdcshyq .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #fadhdcshyq .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+  <tr class="gt_heading">
+    <td colspan="5" class="gt_heading gt_title gt_font_normal">Correlation matrix</td>
+  </tr>
+  <tr class="gt_heading">
+    <td colspan="5" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">Monthly % changes</td>
+  </tr>
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id=""></th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="r_ZAR_USD">r_ZAR_USD</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="r_ZAR_EUR">r_ZAR_EUR</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="r_TOP40">r_TOP40</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="r_TBAL">r_TBAL</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_ZAR_USD</th>
+    <td style="color: #FFFFFF; background-color: #2166ac;" class="gt_row gt_right">1.000</td>
+    <td style="color: #000000; background-color: #588bbf;" class="gt_row gt_right">0.744</td>
+    <td style="color: #000000; background-color: #e4babf;" class="gt_row gt_right">−0.274</td>
+    <td style="color: #000000; background-color: #ecf0f3;" class="gt_row gt_right">0.050</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_ZAR_EUR</th>
+    <td style="color: #000000; background-color: #588bbf;" class="gt_row gt_right">0.744</td>
+    <td style="color: #FFFFFF; background-color: #2166ac;" class="gt_row gt_right">1.000</td>
+    <td style="color: #000000; background-color: #f6f6f6;" class="gt_row gt_right">0.007</td>
+    <td style="color: #000000; background-color: #f1f3f5;" class="gt_row gt_right">0.027</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_TOP40</th>
+    <td style="color: #000000; background-color: #e4babf;" class="gt_row gt_right">−0.274</td>
+    <td style="color: #000000; background-color: #f6f6f6;" class="gt_row gt_right">0.007</td>
+    <td style="color: #FFFFFF; background-color: #2166ac;" class="gt_row gt_right">1.000</td>
+    <td style="color: #000000; background-color: #f6f7f7;" class="gt_row gt_right">0.003</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">r_TBAL</th>
+    <td style="color: #000000; background-color: #ecf0f3;" class="gt_row gt_right">0.050</td>
+    <td style="color: #000000; background-color: #f1f3f5;" class="gt_row gt_right">0.027</td>
+    <td style="color: #000000; background-color: #f6f7f7;" class="gt_row gt_right">0.003</td>
+    <td style="color: #FFFFFF; background-color: #2166ac;" class="gt_row gt_right">1.000</td>
+  </tr>
+</tbody>
+
+
+</table>
+
+</div>
+        </section>
+<section><h2>Key pairwise correlations</h2><ul><li>ZAR/USD vs TOP40: <strong>-0.274</strong></li><li>ZAR/EUR vs TOP40: <strong>+0.007</strong></li><li>ZAR/USD vs ZAR/EUR: <strong>+0.744</strong></li></ul></section>
+
+<section><h2>Regression results — J-curve specs side-by-side</h2>%ΔTrade balance (USA) on lagged %ΔZAR/USD<br><table style="text-align:center"><tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align:left"></td><td colspan="3"><em>Dependent variable: %ΔTrade balance </em></td></tr><tr><td style="text-align:left"></td><tr><td></td><td colspan="1">Lag 0</td><td colspan="1">Lag 1</td><td colspan="1">Lag 2</td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr>
+
+<tr><td style="text-align:left">const</td><td>13.070<sup></sup></td><td>14.632<sup></sup></td><td>15.606<sup></sup></td></tr>
+<tr><td style="text-align:left"></td><td>(9.242)</td><td>(9.325)</td><td>(9.483)</td></tr>
+<tr><td style="text-align:left">%ΔZAR/USD (lagged)</td><td>1.374<sup></sup></td><td>-3.960<sup></sup></td><td>-4.420<sup></sup></td></tr>
+<tr><td style="text-align:left"></td><td>(3.633)</td><td>(3.648)</td><td>(3.735)</td></tr>
+
+<tr><td style="text-align: left">HAC p-value (slope)</td><td>0.680</td><td>0.296</td><td>0.177</td></tr><tr><td style="text-align: left">Breusch-Pagan p</td><td>0.893</td><td>0.178</td><td>0.231</td></tr><tr><td style="text-align: left">Breusch-Godfrey p</td><td>0.048</td><td>0.019</td><td>0.013</td></tr><tr><td style="text-align: left">Durbin-Watson</td><td>2.043</td><td>2.096</td><td>2.000</td></tr><tr><td style="text-align: left">Jarque-Bera p</td><td>0.000</td><td>0.000</td><td>0.000</td></tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align: left">Observations</td><td>58</td><td>57</td><td>56</td></tr><tr><td style="text-align: left">R<sup>2</sup></td><td>0.003</td><td>0.021</td><td>0.025</td></tr><tr><td style="text-align: left">Adjusted R<sup>2</sup></td><td>-0.015</td><td>0.003</td><td>0.007</td></tr><tr><td style="text-align: left">Residual Std. Error</td><td>70.140 (df=56)</td><td>70.080 (df=55)</td><td>70.435 (df=54)</td></tr><tr><td style="text-align: left">F Statistic</td><td>0.143<sup></sup> (df=1; 56)</td><td>1.178<sup></sup> (df=1; 55)</td><td>1.401<sup></sup> (df=1; 54)</td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align: left">Note:</td><td colspan="3" style="text-align: right"><sup>*</sup>p&lt;0.1; <sup>**</sup>p&lt;0.05; <sup>***</sup>p&lt;0.01</td></tr><tr><td colspan="4" style="text-align: right">HAC standard errors use Newey-West with 3 lags.</td></tr><tr><td colspan="4" style="text-align: right">Stars under default OLS standard errors; *p<0.1, **p<0.05, ***p<0.01.</td></tr></table></section>
+
+<section><h2>Coefficient comparison across specifications</h2><div id="wshulnuboc" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#wshulnuboc table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#wshulnuboc thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#wshulnuboc p { margin: 0; padding: 0; }
+ #wshulnuboc .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #wshulnuboc .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #wshulnuboc .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #wshulnuboc .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #wshulnuboc .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #wshulnuboc .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #wshulnuboc .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #wshulnuboc .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #wshulnuboc .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #wshulnuboc .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #wshulnuboc .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #wshulnuboc .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #wshulnuboc .gt_spanner_row { border-bottom-style: hidden; }
+ #wshulnuboc .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #wshulnuboc .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #wshulnuboc .gt_from_md> :first-child { margin-top: 0; }
+ #wshulnuboc .gt_from_md> :last-child { margin-bottom: 0; }
+ #wshulnuboc .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #wshulnuboc .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #wshulnuboc .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #wshulnuboc .gt_row_group_first td { border-top-width: 2px; }
+ #wshulnuboc .gt_row_group_first th { border-top-width: 2px; }
+ #wshulnuboc .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #wshulnuboc .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #wshulnuboc .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #wshulnuboc .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #wshulnuboc .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #wshulnuboc .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #wshulnuboc .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #wshulnuboc .gt_left { text-align: left; }
+ #wshulnuboc .gt_center { text-align: center; }
+ #wshulnuboc .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #wshulnuboc .gt_font_normal { font-weight: normal; }
+ #wshulnuboc .gt_font_bold { font-weight: bold; }
+ #wshulnuboc .gt_font_italic { font-style: italic; }
+ #wshulnuboc .gt_super { font-size: 65%; }
+ #wshulnuboc .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #wshulnuboc .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+  <tr class="gt_heading">
+    <td colspan="4" class="gt_heading gt_title gt_font_normal">Coefficient comparison</td>
+  </tr>
+  <tr class="gt_heading">
+    <td colspan="4" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">J-curve specs at lags 0, 1, 2</td>
+  </tr>
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id=""></th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="lag_0">Lag 0</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="lag_1">Lag 1</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="lag_2">Lag 2</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <th class="gt_row gt_left gt_stub">beta</th>
+    <td class="gt_row gt_right">1.3737</td>
+    <td class="gt_row gt_right">−3.9596</td>
+    <td class="gt_row gt_right">−4.4203</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">p-value (OLS)</th>
+    <td class="gt_row gt_right">0.7068</td>
+    <td class="gt_row gt_right">0.2824</td>
+    <td class="gt_row gt_right">0.2418</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">p-value (HAC)</th>
+    <td class="gt_row gt_right">0.6804</td>
+    <td class="gt_row gt_right">0.2959</td>
+    <td class="gt_row gt_right">0.1775</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">R²</th>
+    <td class="gt_row gt_right">0.0025</td>
+    <td class="gt_row gt_right">0.0210</td>
+    <td class="gt_row gt_right">0.0253</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">n</th>
+    <td class="gt_row gt_right">58.0000</td>
+    <td class="gt_row gt_right">57.0000</td>
+    <td class="gt_row gt_right">56.0000</td>
+  </tr>
+</tbody>
+
+
+</table>
+
+</div>
+        </section>
+<section><h2>BLUE-assumption diagnostics summary</h2><div id="aikgfshaxt" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>
+#aikgfshaxt table {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+#aikgfshaxt thead, tbody, tfoot, tr, td, th { border-style: none; }
+ tr { background-color: transparent; }
+#aikgfshaxt p { margin: 0; padding: 0; }
+ #aikgfshaxt .gt_table { display: table; border-collapse: collapse; line-height: normal; margin-left: auto; margin-right: auto; color: #333333; font-size: 16px; font-weight: normal; font-style: normal; background-color: #FFFFFF; width: auto; border-top-style: solid; border-top-width: 2px; border-top-color: #A8A8A8; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #A8A8A8; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; }
+ #aikgfshaxt .gt_caption { padding-top: 4px; padding-bottom: 4px; }
+ #aikgfshaxt .gt_title { color: #333333; font-size: 125%; font-weight: initial; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; border-bottom-color: #FFFFFF; border-bottom-width: 0; }
+ #aikgfshaxt .gt_subtitle { color: #333333; font-size: 85%; font-weight: initial; padding-top: 3px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-top-color: #FFFFFF; border-top-width: 0; }
+ #aikgfshaxt .gt_heading { background-color: #FFFFFF; text-align: center; border-bottom-color: #FFFFFF; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #aikgfshaxt .gt_bottom_border { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #aikgfshaxt .gt_col_headings { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; }
+ #aikgfshaxt .gt_col_heading { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; overflow-x: hidden; }
+ #aikgfshaxt .gt_column_spanner_outer { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: normal; text-transform: inherit; padding-top: 0; padding-bottom: 0; padding-left: 4px; padding-right: 4px; }
+ #aikgfshaxt .gt_column_spanner_outer:first-child { padding-left: 0; }
+ #aikgfshaxt .gt_column_spanner_outer:last-child { padding-right: 0; }
+ #aikgfshaxt .gt_column_spanner { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: bottom; padding-top: 5px; padding-bottom: 5px; overflow-x: hidden; display: inline-block; width: 100%; }
+ #aikgfshaxt .gt_spanner_row { border-bottom-style: hidden; }
+ #aikgfshaxt .gt_group_heading { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; text-align: left; }
+ #aikgfshaxt .gt_empty_group_heading { padding: 0.5px; color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; vertical-align: middle; }
+ #aikgfshaxt .gt_from_md> :first-child { margin-top: 0; }
+ #aikgfshaxt .gt_from_md> :last-child { margin-bottom: 0; }
+ #aikgfshaxt .gt_row { padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; margin: 10px; border-top-style: solid; border-top-width: 1px; border-top-color: #D3D3D3; border-left-style: none; border-left-width: 1px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 1px; border-right-color: #D3D3D3; vertical-align: middle; overflow-x: hidden; }
+ #aikgfshaxt .gt_stub { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; }
+ #aikgfshaxt .gt_stub_row_group { color: #333333; background-color: #FFFFFF; font-size: 100%; font-weight: initial; text-transform: inherit; border-right-style: solid; border-right-width: 2px; border-right-color: #D3D3D3; padding-left: 5px; padding-right: 5px; vertical-align: top; }
+ #aikgfshaxt .gt_row_group_first td { border-top-width: 2px; }
+ #aikgfshaxt .gt_row_group_first th { border-top-width: 2px; }
+ #aikgfshaxt .gt_striped { color: #333333; background-color: #F4F4F4; }
+ #aikgfshaxt .gt_table_body { border-top-style: solid; border-top-width: 2px; border-top-color: #D3D3D3; border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: #D3D3D3; }
+ #aikgfshaxt .gt_grand_summary_row { color: #333333; background-color: #FFFFFF; text-transform: inherit; padding-top: 8px; padding-bottom: 8px; padding-left: 5px; padding-right: 5px; }
+ #aikgfshaxt .gt_first_grand_summary_row_bottom { border-top-style: double; border-top-width: 6px; border-top-color: #D3D3D3; }
+ #aikgfshaxt .gt_last_grand_summary_row_top { border-bottom-style: double; border-bottom-width: 6px; border-bottom-color: #D3D3D3; }
+ #aikgfshaxt .gt_sourcenotes { color: #333333; background-color: #FFFFFF; border-bottom-style: none; border-bottom-width: 2px; border-bottom-color: #D3D3D3; border-left-style: none; border-left-width: 2px; border-left-color: #D3D3D3; border-right-style: none; border-right-width: 2px; border-right-color: #D3D3D3; }
+ #aikgfshaxt .gt_sourcenote { font-size: 90%; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; text-align: left; }
+ #aikgfshaxt .gt_left { text-align: left; }
+ #aikgfshaxt .gt_center { text-align: center; }
+ #aikgfshaxt .gt_right { text-align: right; font-variant-numeric: tabular-nums; }
+ #aikgfshaxt .gt_font_normal { font-weight: normal; }
+ #aikgfshaxt .gt_font_bold { font-weight: bold; }
+ #aikgfshaxt .gt_font_italic { font-style: italic; }
+ #aikgfshaxt .gt_super { font-size: 65%; }
+ #aikgfshaxt .gt_footnote_marks { font-size: 75%; vertical-align: 0.4em; position: initial; }
+ #aikgfshaxt .gt_asterisk { font-size: 100%; vertical-align: 0; }
+ 
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+
+  <tr class="gt_heading">
+    <td colspan="4" class="gt_heading gt_title gt_font_normal">BLUE-assumption diagnostics</td>
+  </tr>
+  <tr class="gt_heading">
+    <td colspan="4" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">p-values; <strong>*</strong> = reject at 5%</td>
+  </tr>
+<tr class="gt_col_headings">
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id=""></th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="lag_0">Lag 0</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="lag_1">Lag 1</th>
+  <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="lag_2">Lag 2</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+  <tr>
+    <th class="gt_row gt_left gt_stub">Breusch-Pagan (homosked.)</th>
+    <td class="gt_row gt_left">0.893 </td>
+    <td class="gt_row gt_left">0.178 </td>
+    <td class="gt_row gt_left">0.231 </td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">Breusch-Godfrey (no autocorr)</th>
+    <td class="gt_row gt_left">0.048*</td>
+    <td class="gt_row gt_left">0.019*</td>
+    <td class="gt_row gt_left">0.013*</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">Durbin-Watson</th>
+    <td class="gt_row gt_left">2.043</td>
+    <td class="gt_row gt_left">2.096</td>
+    <td class="gt_row gt_left">2.000</td>
+  </tr>
+  <tr>
+    <th class="gt_row gt_left gt_stub">Jarque-Bera (normality)</th>
+    <td class="gt_row gt_left">0.000*</td>
+    <td class="gt_row gt_left">0.000*</td>
+    <td class="gt_row gt_left">0.000*</td>
+  </tr>
+</tbody>
+
+
+</table>
+
+</div>
+        </section>
+<section><h2>Interpretation</h2><pre>Summary statistics & correlations:
+TOP40 has the highest monthly volatility of the three return series
+(σ ≈ 4.2%) — a single-country emerging-market index naturally swings
+more than its currency. The two FX series are positively skewed,
+reflecting episodic ZAR sell-offs that are larger than the
+corresponding rallies. ZAR/USD and ZAR/EUR co-move strongly
+(corr ≈ +0.74); the bulk of monthly variation in both is the rand
+itself, with the EUR/USD cross adding a second-order wedge (which is
+why ZAR/EUR vs. TOP40 is essentially zero while ZAR/USD vs. TOP40 is
+clearly negative). The ZAR/USD–TOP40 correlation of −0.27 is the
+most economically interesting pair: when the rand weakens, JSE
+equities tend to sell off in the same month — consistent with
+risk-off episodes hitting the currency and local equities together
+(portfolio outflows, commodity-price drawdowns, global-risk
+repricing). A portion of TOP40 earnings is rand-hedged via
+diversified miners and dual-listed names, which dampens — but does
+not reverse — the negative co-movement at the monthly horizon.
+
+Regression results:
+The contemporaneous slope is positive (β ≈ +1.37): in the same month
+that the rand weakens, the absolute bilateral deficit with the US
+tends to widen rather than shrink. This matches the short-run side
+of the J-curve — invoice prices and contracted import volumes adjust
+slowly, so a weaker rand mechanically raises the rand cost of imports
+before export volumes respond. At the 1- and 2-month lags the slope
+flips sign (β ≈ −3.96 and −4.42), the textbook J-curve recovery: a
+ZAR depreciation today is associated with a smaller deficit one to
+two months later as exports pick up and import demand compresses.
+However, none of the three slopes is statistically significant at
+conventional levels (p = 0.71, 0.28, 0.24) and R² stays below 3%,
+so the lagged signs are directionally suggestive rather than
+conclusive. That is unsurprising: monthly bilateral trade balances
+are dominated by commodity-price swings, US-side demand, and
+idiosyncratic shipment timing that a single FX regressor cannot
+capture.
+
+BLUE-assumption diagnostics:
+Stationarity is fine — ADF rejects the unit-root null for both
+%ΔTrade balance and %ΔZAR/USD at p < 0.001, so the regressions are
+not spurious. Breusch-Pagan does not reject homoskedasticity at any
+lag (p ≈ 0.18–0.89) and Durbin-Watson is essentially 2.0, so first-
+order serial correlation is absent. However, Breusch-Godfrey at four
+lags rejects the no-higher-order-autocorrelation null in every
+specification (p = 0.048 / 0.019 / 0.013), and Jarque-Bera firmly
+rejects residual normality (p ≈ 0). The autocorrelation finding is
+why HAC (Newey-West, 3 lags) standard errors were also reported —
+they only modestly shift the slope p-values (e.g. lag-2 moves from
+0.24 to 0.18), so the qualitative conclusion is unchanged. The
+non-normal residuals mean the small-sample t/F p-values should be
+treated as approximate; a bootstrap or permutation inference would
+be cleaner if any slope mattered for a decision.
+
+Caveats:
+The bilateral US–ZA balance is narrower than ZA's overall current
+account, and the 60-month sample spans the COVID rebound, the 2022
+commodity spike, and the 2024–2025 logistics disruptions — regime
+shifts a single linear specification cannot absorb. Given the
+Breusch-Godfrey rejection, an ARDL or error-correction model that
+explicitly models the residual dynamics would be the natural next
+step for inference.
+</pre></section>
+</body>
+</html>
