@@ -2,11 +2,12 @@
 Part 3 — South Africa: exchange rates, equity index, and trade balance.
 
 Country: South Africa (ZAR). Major trading partner used for the trade balance: USA.
-Stock index: JSE Top 40. Exchange rates: ZAR/USD (EXSFUS) and USD/EUR (EXUSEU).
+Stock index: JSE Top 40. Exchange rates: USD/ZAR (EXSFUS) and EUR/USD (EXUSEU).
+Currency pairs follow FX-market convention: "USD/ZAR" means ZAR per 1 USD.
 
 Data files (monthly):
-    ZAR_USD.csv               ZAR per 1 USD              [South African Reserve Bank]
-    USD_EUR.csv               USD per 1 EUR              [South African Reserve Bank]
+    USD_ZAR.csv               USD/ZAR                    [South African Reserve Bank]
+    EUR_USD.csv               EUR/USD                    [South African Reserve Bank]
     ZA_TOP40_index.csv        JSE Top 40 close           [Investing.com,
                                                           investing.com/indices/ftse-jse-top-40-historical-data]
     ZA_US_trade_balance.csv   ZA trade balance vs. USA   [US Census Bureau,
@@ -17,9 +18,11 @@ import polars as pl
 import statsmodels.api as sm
 from great_tables import GT, md
 from stargazer.stargazer import Stargazer
-from statsmodels.stats.diagnostic import het_breuschpagan, acorr_breusch_godfrey
-from statsmodels.stats.stattools import durbin_watson, jarque_bera
+from statsmodels.stats.diagnostic import het_breuschpagan, acorr_breusch_godfrey, linear_reset
+from statsmodels.stats.stattools import durbin_watson
 from statsmodels.tsa.stattools import adfuller
+
+from plot_distributions import build_distribution_section, build_residual_acf_section
 
 
 def load_series(path: str, date_col: str, value_col: str, name: str) -> pl.DataFrame:
@@ -33,12 +36,13 @@ def load_series(path: str, date_col: str, value_col: str, name: str) -> pl.DataF
     )
 
 
-zar_usd = load_series("ZAR_USD.csv", "observation_date", "EXSFUS", "ZAR_USD")
-usd_eur = load_series("USD_EUR.csv", "observation_date", "EXUSEU", "USD_EUR")
+zar_usd = load_series("USD_ZAR.csv", "observation_date", "EXSFUS", "ZAR_USD")
+usd_eur = load_series("EUR_USD.csv", "observation_date", "EXUSEU", "USD_EUR")
 top40 = load_series("ZA_TOP40_index.csv", "Date", "Close", "TOP40")
 trade_bal = load_series("ZA_US_trade_balance.csv", "date", "balance", "TRADE_BAL_USD")
 
-# ZAR/EUR cross-rate from ZAR/USD * USD/EUR. Inner-join keeps the common window.
+# EUR/ZAR cross-rate from ZAR_USD * USD_EUR (units: ZAR/USD × USD/EUR → ZAR
+# per EUR; USD cancels). Inner-join keeps the common window.
 levels = (
     zar_usd
     .join(usd_eur, on="date", how="inner")
@@ -67,15 +71,15 @@ returns = (
     levels
     .select(
         pl.col("date"),
-        (pl.col("ZAR_USD").pct_change() * 100).alias("r_ZAR_USD"),
-        (pl.col("ZAR_EUR").pct_change() * 100).alias("r_ZAR_EUR"),
+        (pl.col("ZAR_USD").pct_change() * 100).alias("r_USD/ZAR"),
+        (pl.col("ZAR_EUR").pct_change() * 100).alias("r_EUR/ZAR"),
         (pl.col("TOP40").pct_change() * 100).alias("r_TOP40"),
         (pl.col("TRADE_BAL_USD").abs().pct_change() * 100).alias("r_TBAL"),
     )
     .drop_nulls()
 )
 
-ret_cols = ["r_ZAR_USD", "r_ZAR_EUR", "r_TOP40", "r_TBAL"]
+ret_cols = ["r_USD/ZAR", "r_EUR/ZAR", "r_TOP40", "r_TBAL"]
 
 print("\n" + "=" * 70)
 print("Summary statistics of monthly % changes")
@@ -106,13 +110,13 @@ corr_labeled = (
 )
 print(corr_labeled)
 
-fx_idx     = returns.select(pl.corr("r_ZAR_USD", "r_TOP40")).item()
-fx_eur_idx = returns.select(pl.corr("r_ZAR_EUR", "r_TOP40")).item()
-fx_fx      = returns.select(pl.corr("r_ZAR_USD", "r_ZAR_EUR")).item()
+fx_idx     = returns.select(pl.corr("r_USD/ZAR", "r_TOP40")).item()
+fx_eur_idx = returns.select(pl.corr("r_EUR/ZAR", "r_TOP40")).item()
+fx_fx      = returns.select(pl.corr("r_USD/ZAR", "r_EUR/ZAR")).item()
 print(f"\nKey pairwise correlations:")
-print(f"  ZAR/USD vs TOP40 : {fx_idx:+.3f}")
-print(f"  ZAR/EUR vs TOP40 : {fx_eur_idx:+.3f}")
-print(f"  ZAR/USD vs ZAR/EUR: {fx_fx:+.3f}")
+print(f"  USD/ZAR vs TOP40 : {fx_idx:+.3f}")
+print(f"  EUR/ZAR vs TOP40 : {fx_eur_idx:+.3f}")
+print(f"  USD/ZAR vs EUR/ZAR: {fx_fx:+.3f}")
 
 
 # Stationarity check (ADF) on the inputs that go into the regression.
@@ -122,7 +126,7 @@ print("\n" + "=" * 70)
 print("Augmented Dickey-Fuller tests on regression inputs")
 print("=" * 70)
 print(f"  H0: series has a unit root (non-stationary).")
-for col in ["r_TBAL", "r_ZAR_USD"]:
+for col in ["r_TBAL", "r_USD/ZAR"]:
     stat, pval, *_ = adfuller(returns[col].to_numpy(), autolag="AIC")
     verdict = "stationary" if pval < 0.05 else "NON-stationary"
     print(f"  {col:11s}  ADF = {stat:+.3f}   p = {pval:.4f}   → {verdict}")
@@ -140,7 +144,10 @@ def diagnostics(model) -> dict:
     bp_lm, bp_p, _, _ = het_breuschpagan(resid, exog)
     bg_lm, bg_p, _, _ = acorr_breusch_godfrey(model, nlags=BG_LAGS)
     dw = durbin_watson(resid)
-    jb, jb_p, jb_skew, jb_kurt = jarque_bera(resid)
+    # Ramsey RESET: joint F-test that powers 2 and 3 of fitted values add
+    # nothing to the regression. Rejection ⇒ functional-form misspecification.
+    reset = linear_reset(model, power=3, use_f=True)
+    reset_f, reset_p = float(reset.fvalue), float(reset.pvalue)
     print(f"  Diagnostics:")
     print(f"    Breusch-Pagan (homosked.)        LM = {bp_lm:7.3f}  p = {bp_p:.3f}"
           f"   {'OK' if bp_p > 0.05 else 'REJECT'}")
@@ -148,14 +155,14 @@ def diagnostics(model) -> dict:
           f"   {'OK' if bg_p > 0.05 else 'REJECT'}")
     print(f"    Durbin-Watson                    DW = {dw:7.3f}              "
           f"   {'OK' if 1.5 < dw < 2.5 else 'CHECK'}")
-    print(f"    Jarque-Bera (normality)          JB = {jb:7.3f}  p = {jb_p:.3f}"
-          f"   {'OK' if jb_p > 0.05 else 'REJECT'}")
-    return {"bp_p": bp_p, "bg_p": bg_p, "dw": dw, "jb_p": jb_p}
+    print(f"    Ramsey RESET (no misspec., p3)   F  = {reset_f:7.3f}  p = {reset_p:.3f}"
+          f"   {'OK' if reset_p > 0.05 else 'REJECT'}")
+    return {"bp_p": bp_p, "bg_p": bg_p, "dw": dw, "reset_p": reset_p}
 
 
-# Regression: %ΔTrade balance = α + β · %ΔZAR_USD(lag) + ε.
-# A rise in ZAR/USD = ZAR depreciation. J-curve theory predicts the trade
-# balance worsens contemporaneously and improves at lags 1–2.
+# Regression: %ΔTrade balance = α + β · %ΔUSD/ZAR(lag) + ε.
+# A rise in USD/ZAR = more ZAR per USD = ZAR depreciation. J-curve theory
+# predicts the trade balance worsens contemporaneously and improves at lags 1–2.
 def run_ols(df: pl.DataFrame, y_col: str, x_col: str, lag: int, label: str):
     sub = (
         df.select(
@@ -183,11 +190,11 @@ def run_ols(df: pl.DataFrame, y_col: str, x_col: str, lag: int, label: str):
 
 
 print("\n" + "=" * 70)
-print("Regressions: %ΔTrade balance = α + β · %ΔZAR_USD(lag) + ε")
+print("Regressions: %ΔTrade balance = α + β · %ΔUSD/ZAR(lag) + ε")
 print("=" * 70)
-m0, m0_hac, d0 = run_ols(returns, "r_TBAL", "r_ZAR_USD", 0, "contemporaneous (lag 0)")
-m1, m1_hac, d1 = run_ols(returns, "r_TBAL", "r_ZAR_USD", 1, "1-month lag")
-m2, m2_hac, d2 = run_ols(returns, "r_TBAL", "r_ZAR_USD", 2, "2-month lag")
+m0, m0_hac, d0 = run_ols(returns, "r_TBAL", "r_USD/ZAR", 0, "contemporaneous (lag 0)")
+m1, m1_hac, d1 = run_ols(returns, "r_TBAL", "r_USD/ZAR", 1, "1-month lag")
+m2, m2_hac, d2 = run_ols(returns, "r_TBAL", "r_USD/ZAR", 2, "2-month lag")
 
 print("\n" + "=" * 70)
 print("Coefficient comparison across specifications")
@@ -206,10 +213,13 @@ print("=" * 70)
 def mark(p): return f"{p:.3f}{'*' if p < 0.05 else ' '}"
 diag_df = pl.DataFrame({
     "test":  ["Breusch-Pagan (homosked.)", "Breusch-Godfrey (no autocorr)",
-              "Durbin-Watson",             "Jarque-Bera (normality)"],
-    "lag_0": [mark(d0["bp_p"]), mark(d0["bg_p"]), f"{d0['dw']:.3f}", mark(d0["jb_p"])],
-    "lag_1": [mark(d1["bp_p"]), mark(d1["bg_p"]), f"{d1['dw']:.3f}", mark(d1["jb_p"])],
-    "lag_2": [mark(d2["bp_p"]), mark(d2["bg_p"]), f"{d2['dw']:.3f}", mark(d2["jb_p"])],
+              "Durbin-Watson",             "Ramsey RESET (no misspec.)"],
+    "lag_0": [mark(d0["bp_p"]), mark(d0["bg_p"]), f"{d0['dw']:.3f}",
+              mark(d0["reset_p"])],
+    "lag_1": [mark(d1["bp_p"]), mark(d1["bg_p"]), f"{d1['dw']:.3f}",
+              mark(d1["reset_p"])],
+    "lag_2": [mark(d2["bp_p"]), mark(d2["bg_p"]), f"{d2['dw']:.3f}",
+              mark(d2["reset_p"])],
 })
 print(diag_df)
 
@@ -219,11 +229,11 @@ TOP40 has the highest monthly volatility of the three return series
 (σ ≈ 4.2%) — a single-country emerging-market index naturally swings
 more than its currency. The two FX series are positively skewed,
 reflecting episodic ZAR sell-offs that are larger than the
-corresponding rallies. ZAR/USD and ZAR/EUR co-move strongly
+corresponding rallies. USD/ZAR and EUR/ZAR co-move strongly
 (corr ≈ +0.74); the bulk of monthly variation in both is the rand
 itself, with the EUR/USD cross adding a second-order wedge (which is
-why ZAR/EUR vs. TOP40 is essentially zero while ZAR/USD vs. TOP40 is
-clearly negative). The ZAR/USD–TOP40 correlation of −0.27 is the
+why EUR/ZAR vs. TOP40 is essentially zero while USD/ZAR vs. TOP40 is
+clearly negative). The USD/ZAR–TOP40 correlation of −0.27 is the
 most economically interesting pair: when the rand weakens, JSE
 equities tend to sell off in the same month — consistent with
 risk-off episodes hitting the currency and local equities together
@@ -252,19 +262,22 @@ capture.
 
 BLUE-assumption diagnostics:
 Stationarity is fine — ADF rejects the unit-root null for both
-%ΔTrade balance and %ΔZAR/USD at p < 0.001, so the regressions are
+%ΔTrade balance and %ΔUSD/ZAR at p < 0.001, so the regressions are
 not spurious. Breusch-Pagan does not reject homoskedasticity at any
 lag (p ≈ 0.18–0.89) and Durbin-Watson is essentially 2.0, so first-
 order serial correlation is absent. However, Breusch-Godfrey at four
 lags rejects the no-higher-order-autocorrelation null in every
-specification (p = 0.048 / 0.019 / 0.013), and Jarque-Bera firmly
-rejects residual normality (p ≈ 0). The autocorrelation finding is
-why HAC (Newey-West, 3 lags) standard errors were also reported —
-they only modestly shift the slope p-values (e.g. lag-2 moves from
-0.24 to 0.18), so the qualitative conclusion is unchanged. The
-non-normal residuals mean the small-sample t/F p-values should be
-treated as approximate; a bootstrap or permutation inference would
-be cleaner if any slope mattered for a decision.
+specification (p = 0.048 / 0.019 / 0.013), which is why HAC
+(Newey-West, 3 lags) standard errors were also reported — they only
+modestly shift the slope p-values (e.g. lag-2 moves from 0.24 to
+0.18), so the qualitative conclusion is unchanged. Ramsey RESET
+passes at lags 0 and 1 (p ≈ 0.87) but rejects borderline at lag 2
+(p ≈ 0.05), suggesting the linear single-regressor form leaves
+non-linear structure on the table at the 2-month horizon —
+unsurprising given the J-curve is inherently non-linear. The 58-obs
+sample is also small enough that t/F p-values should be treated as
+approximate; a bootstrap or permutation inference would be cleaner
+if any slope mattered for a decision.
 
 Caveats:
 The bilateral US–ZA balance is narrower than ZA's overall current
@@ -289,10 +302,10 @@ def section(title: str, body: str) -> str:
 
 
 star = Stargazer([m0, m1, m2])
-star.title("%ΔTrade balance (USA) on lagged %ΔZAR/USD")
+star.title("%ΔTrade balance (USA) on lagged %ΔUSD/ZAR")
 star.custom_columns(["Lag 0", "Lag 1", "Lag 2"], [1, 1, 1])
 star.show_model_numbers(False)
-star.rename_covariates({"zar_usd_lag": "%ΔZAR/USD (lagged)"})
+star.rename_covariates({"zar_usd_lag": "%ΔUSD/ZAR (lagged)"})
 star.dependent_variable_name("%ΔTrade balance ")
 star.significant_digits(3)
 star.add_line("HAC p-value (slope)",
@@ -305,8 +318,8 @@ star.add_line("Breusch-Godfrey p",
               [f"{d0['bg_p']:.3f}", f"{d1['bg_p']:.3f}", f"{d2['bg_p']:.3f}"])
 star.add_line("Durbin-Watson",
               [f"{d0['dw']:.3f}", f"{d1['dw']:.3f}", f"{d2['dw']:.3f}"])
-star.add_line("Jarque-Bera p",
-              [f"{d0['jb_p']:.3f}", f"{d1['jb_p']:.3f}", f"{d2['jb_p']:.3f}"])
+star.add_line("Ramsey RESET p",
+              [f"{d0['reset_p']:.3f}", f"{d1['reset_p']:.3f}", f"{d2['reset_p']:.3f}"])
 star.add_custom_notes([
     f"HAC standard errors use Newey-West with {HAC_LAGS} lags.",
     "Stars under default OLS standard errors; *p<0.1, **p<0.05, ***p<0.01.",
@@ -380,12 +393,12 @@ html = f"""<!doctype html>
         <th style="text-align:left">Source</th></tr>
   </thead>
   <tbody>
-    <tr><td style="text-align:left">ZAR per 1 USD</td>
-        <td style="text-align:left"><code>ZAR_USD.csv</code></td>
+    <tr><td style="text-align:left">USD/ZAR</td>
+        <td style="text-align:left"><code>USD_ZAR.csv</code></td>
         <td style="text-align:left">South African Reserve Bank
             (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
-    <tr><td style="text-align:left">USD per 1 EUR</td>
-        <td style="text-align:left"><code>USD_EUR.csv</code></td>
+    <tr><td style="text-align:left">EUR/USD</td>
+        <td style="text-align:left"><code>EUR_USD.csv</code></td>
         <td style="text-align:left">South African Reserve Bank
             (<a href="https://www.resbank.co.za/">resbank.co.za</a>)</td></tr>
     <tr><td style="text-align:left">JSE Top 40 close</td>
@@ -415,21 +428,28 @@ html = f"""<!doctype html>
 {section("Correlation matrix of monthly % changes", corr_html)}
 {section("Key pairwise correlations",
     "<ul>"
-    f"<li>ZAR/USD vs TOP40: <strong>{fx_idx:+.3f}</strong></li>"
-    f"<li>ZAR/EUR vs TOP40: <strong>{fx_eur_idx:+.3f}</strong></li>"
-    f"<li>ZAR/USD vs ZAR/EUR: <strong>{fx_fx:+.3f}</strong></li>"
+    f"<li>USD/ZAR vs TOP40: <strong>{fx_idx:+.3f}</strong></li>"
+    f"<li>EUR/ZAR vs TOP40: <strong>{fx_eur_idx:+.3f}</strong></li>"
+    f"<li>USD/ZAR vs EUR/ZAR: <strong>{fx_fx:+.3f}</strong></li>"
     "</ul>")}
 
 {section("Regression results — J-curve specs side-by-side", star.render_html())}
 
 {section("Coefficient comparison across specifications", summary_html)}
 {section("BLUE-assumption diagnostics summary", diag_html)}
+{build_residual_acf_section([
+    ("Lag 0", m0.resid.to_numpy()),
+    ("Lag 1", m1.resid.to_numpy()),
+    ("Lag 2", m2.resid.to_numpy()),
+])}
 {section("Interpretation", f"<pre>{interpretation}</pre>")}
+{build_distribution_section(returns_df=returns, include_plotly_js=False)}
 </body>
 </html>
 """
 
-out_path = "results.html"
+out_path = "part_3.html"
+
 with open(out_path, "w", encoding="utf-8") as f:
     f.write(html)
 print(f"\nHTML report written to {out_path}")
