@@ -7,6 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "great-tables>=0.21.0",
     "numpy>=2.4.4",
+    "plotly>=6.7.0",
     "polars>=1.40.1",
     "pyarrow>=24.0.0",
     "stargazer>=0.0.7",
